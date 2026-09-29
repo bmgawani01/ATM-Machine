@@ -1,0 +1,55 @@
+name: Build
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+  schedule:
+    # keeps the free Maven Central cache warm and proves the build still works
+    - cron: '0 3 1 * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build the single runnable jar
+        run: mvn -B package
+
+      - name: Verify the jar really is self-contained
+        run: |
+          unzip -l target/atm-system.jar > jar.txt
+          for entry in \
+            atm/system/AtmSystem.class \
+            atm/system/Conn.class \
+            icons/atm.jpg \
+            icons/logo.jpg \
+            com/mysql/cj/jdbc/Driver.class \
+            com/toedter/calendar/JDateChooser.class ; do
+            grep -q "$entry" jar.txt || { echo "MISSING $entry"; exit 1; }
+          done
+          unzip -p target/atm-system.jar META-INF/MANIFEST.MF | grep -q 'Main-Class: atm.system.AtmSystem'
+          echo "jar is self-contained and runnable"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atm-system-jar
+          path: target/atm-system.jar
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            target/atm-system.jar \
+            --title "ATM System ${GITHUB_REF_NAME}" \
+            --generate-notes

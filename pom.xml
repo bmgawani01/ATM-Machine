@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>atm</groupId>
+    <artifactId>atm-system</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+    <name>atm-system</name>
+    <description>Single-package build of the ATM System Swing app (classes + driver + calendar + images in one jar)</description>
+
+    <properties>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <main.class>atm.system.AtmSystem</main.class>
+    </properties>
+
+    <dependencies>
+        <!-- Same driver class the code already loads: com.mysql.cj.jdbc.Driver -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.4.0</version>
+        </dependency>
+        <!-- Byte-for-byte the same jcalendar-tz jar the NetBeans project used -->
+        <dependency>
+            <groupId>com.luuuis</groupId>
+            <artifactId>jcalendar-tz</artifactId>
+            <version>1.3.3-4</version>
+        </dependency>
+        <!-- Connection pool: keeps the app alive across DB hiccups and gives us clean transactions -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>5.1.0</version>
+        </dependency>
+        <!-- HikariCP needs an SLF4J binding; the app logs through java.util.logging itself. -->
+        <!-- Pinned directly so jcalendar-tz's old slf4j-api 1.7 cannot win the version conflict. -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.13</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>2.0.13</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- NetBeans layout: java files under src/, images under src/icons/ -->
+        <sourceDirectory>src</sourceDirectory>
+        <finalName>atm-system</finalName>
+
+        <resources>
+            <resource>
+                <directory>src</directory>
+                <includes>
+                    <include>icons/**</include>
+                </includes>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <excludes>
+                        <!-- unrelated experiment, not part of the ATM app -->
+                        <exclude>**/Practice.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!-- Fat jar: one file that contains the app, the JDBC driver, JDateChooser and the images. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>module-info.class</exclude>
+                                        <exclude>META-INF/versions/*/module-info.class</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${main.class}</mainClass>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

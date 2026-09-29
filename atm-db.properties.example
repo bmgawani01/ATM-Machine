@@ -1,0 +1,17 @@
+# Copy this file to atm-db.properties (same folder) and fill in the free cloud
+# database details from your provider. atm-db.properties is git-ignored.
+#
+# Option A - full JDBC URL (copy it from the provider dashboard):
+#db.url=jdbc:mysql://user:password@host:4000/bankmanagementsystem_db?sslMode=REQUIRED
+#db.user=your_user
+#db.pass=your_password
+#
+# Option B - host parts only (the app builds the URL for you):
+db.host=HOST_FROM_PROVIDER
+db.port=3306
+db.name=bankmanagementsystem_db
+db.user=YOUR_USER
+db.pass=YOUR_PASSWORD
+# TiDB Cloud Serverless needs TLS; the default sslMode=PREFERRED is fine, but
+# REQUIRED is stricter if you prefer that.
+#db.params=sslMode=REQUIRED&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=15000

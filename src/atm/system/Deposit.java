@@ -1,85 +1,79 @@
 package atm.system;
 
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import java.util.*;
+import atm.core.Bank;
+import atm.core.Ids;
+import atm.core.Money;
+import atm.core.model.MovementResult;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 
-public class Deposit extends JFrame implements ActionListener{
-    
+/**
+ * Cash deposit. The amount is parsed and credited by {@code atm.core.MoneyService}, which
+ * updates the balance with a guarded UPDATE and records the movement against the session's
+ * account, so the amount can no longer be typed straight into SQL.
+ */
+public class Deposit extends JFrame implements ActionListener {
+
     JTextField t1, t2;
     JButton b1, b2, b3;
     JLabel l1, l2, l3;
     String pin;
-    
-    Deposit(String pin){
-        this.pin = pin;
-        // Path is relative to the Deposit.java file location
-ImageIcon i1 = new ImageIcon(getClass().getResource("/icons/atm.jpg"));
-Image i2 = i1.getImage().getScaledInstance(1000, 1180, Image.SCALE_DEFAULT);
-ImageIcon i3 = new ImageIcon(i2);
-JLabel l3 = new JLabel(i3);
-l3.setBounds(0, 0, 960, 1080);
-add(l3);
 
-        l1 = new JLabel("ENTER AMOUNT YOU WANT TO DEPOSIT");
-        l1.setForeground(Color.WHITE);
-        l1.setFont(new Font("System", Font.BOLD, 16));
-        
-        t1 = new JTextField();
-        t1.setFont(new Font("Raleway", Font.BOLD, 22));
-        
-        b1 = new JButton("DEPOSIT");
-        b2 = new JButton("BACK");
-        
-        setLayout(null);
-        
-        l1.setBounds(190,350,400,35);
-        l3.add(l1);
-        
-        t1.setBounds(190,420,320,25);
-        l3.add(t1);
-        
-        b1.setBounds(390,588,150,35);
-        l3.add(b1);
-        
-        b2.setBounds(390,633,150,35);
-        l3.add(b2);
-        
-        b1.addActionListener(this);
-        b2.addActionListener(this);
-        
-        setSize(960,1080);
-        setUndecorated(true);
-        setLocation(500,0);
+    Deposit(String pin) {
+        this.pin = pin;
+        Bank.CustomerSession session = AppSession.require(pin);
+
+        t1 = Ui.textField(20);
+        t1.setFont(new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.BOLD, 20));
+        t1.setToolTipText("Whole dollars only, for example 250");
+
+        JButton deposit = Ui.button("DEPOSIT");
+        deposit.addActionListener(this);
+        b1 = deposit;
+        b2 = Ui.backButton(this, pin);
+        b3 = Ui.cancelButton(this);
+
+        Ui.Form form = new Ui.Form("ENTER AMOUNT YOU WANT TO DEPOSIT")
+            .subtitle("Cash is credited to the account on your card.")
+            .row("Amount (USD)", t1)
+            .note("Available balance: " + Money.usd(Bank.get().balance(session)))
+            .buttons(b1, b2, b3);
+
+        Ui.shell(this, "ATM - Deposit", form.panel(), 900, 820);
+        getRootPane().setDefaultButton(b1);
         setVisible(true);
     }
-    
-    public void actionPerformed(ActionEvent ae){
-        try{        
-            String amount = t1.getText();
-            Date date = new Date();
-            
-            if(ae.getSource() == b1){
-                if(t1.getText().equals("")){
-                    JOptionPane.showMessageDialog(null, "Please enter the Amount you want to Deposit");
-                }else{
-                    Conn c1 = new Conn();
-                    c1.s.executeUpdate("insert into bank values('"+pin+"', '"+date+"', 'Deposit', '"+amount+"')");
-                    JOptionPane.showMessageDialog(null, "USD. "+amount+" Deposited Successfully");
-                    setVisible(false);
-                    new Transactions(pin).setVisible(true);
-                }
-            }else if(ae.getSource() == b2){
-                setVisible(false);
-                new Transactions(pin).setVisible(true);
-            }
-        }catch(Exception e){
-            e.printStackTrace();
+
+    @Override
+    public void actionPerformed(ActionEvent ae) {
+        if (ae.getSource() != b1) {
+            return;
         }
+        Ui.run(this, () -> {
+            Bank.CustomerSession session = AppSession.require(pin);
+            String amount = t1.getText().trim();
+            if (amount.isEmpty()) {
+                throw new atm.core.AtmException(atm.core.AtmException.Reason.VALIDATION,
+                    "Enter the amount you want to deposit");
+            }
+            MovementResult result = Bank.get().deposit(session, amount,
+                "Cash deposit at the machine", Ids.idempotencyKey());
+            Ui.receipt(this, "Deposit accepted", result.txn().reference(),
+                result.txn().amount(), result.balance(),
+                result.duplicate() ? "This deposit had already been recorded."
+                    : "Notes: " + result.txn().note());
+            setVisible(false);
+            dispose();
+            new Transactions(pin).setVisible(true);
+        });
     }
-    
-    public static void main(String[] args){
-        new Deposit("").setVisible(true);
+
+    public static void main(String[] args) {
+        AppSession.ensureDemo();
+        new Deposit(AppSession.pin());
     }
 }

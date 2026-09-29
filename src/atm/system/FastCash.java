@@ -1,12 +1,29 @@
 package atm.system;
 
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import java.sql.*;
-import java.util.Date;
+import atm.core.Bank;
+import atm.core.Ids;
+import atm.core.Money;
+import atm.core.model.MovementResult;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.math.BigDecimal;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
+/**
+ * Fast cash: preset amounts only, so a customer who is in a hurry never has to type. The
+ * amounts are still checked against the balance, the limits and the machine's notes by
+ * {@code atm.core.MoneyService}.
+ */
 public class FastCash extends JFrame implements ActionListener {
+
+    private static final BigDecimal[] PRESETS = {
+        BigDecimal.valueOf(100), BigDecimal.valueOf(200), BigDecimal.valueOf(500),
+        BigDecimal.valueOf(1000)
+    };
 
     JLabel l1;
     JButton b1, b2, b3, b4, b5, b6, b7;
@@ -14,118 +31,87 @@ public class FastCash extends JFrame implements ActionListener {
 
     FastCash(String pin) {
         this.pin = pin;
+        Bank.CustomerSession session = AppSession.require(pin);
 
-        
-        ImageIcon icon = new ImageIcon(getClass().getResource("/icons/logo.jpg"));
+        JPanel grid = new JPanel(new GridLayout(2, 2, 12, 12));
+        grid.setOpaque(false);
 
-
-
-
-
-        Image i2 = icon.getImage().getScaledInstance(960, 1080, Image.SCALE_DEFAULT);
-        ImageIcon i3 = new ImageIcon(i2);
-        JLabel l3 = new JLabel(i3);
-        l3.setBounds(0, 0, 960, 1080);
-        add(l3);
-
-        l1 = new JLabel("SELECT WITHDRAWAL AMOUNT");
-        l1.setForeground(Color.WHITE);
-        l1.setFont(new Font("System", Font.BOLD, 16));
-
-        b1 = new JButton("USD 100");
-        b2 = new JButton("USD 500");
-        b3 = new JButton("USD 1000");
-        b4 = new JButton("USD 2000");
-        b5 = new JButton("USD 5000");
-        b6 = new JButton("USD 10000");
-        b7 = new JButton("BACK");
-
-        setLayout(null);
-
-        l1.setBounds(235, 400, 700, 35);
-        l3.add(l1);
-
-        b1.setBounds(170, 499, 150, 35);
-        l3.add(b1);
-
-        b2.setBounds(390, 499, 150, 35);
-        l3.add(b2);
-
-        b3.setBounds(170, 543, 150, 35);
-        l3.add(b3);
-
-        b4.setBounds(390, 543, 150, 35);
-        l3.add(b4);
-
-        b5.setBounds(170, 588, 150, 35);
-        l3.add(b5);
-
-        b6.setBounds(390, 588, 150, 35);
-        l3.add(b6);
-
-        b7.setBounds(390, 633, 150, 35);
-        l3.add(b7);
-
+        b1 = preset("USD " + PRESETS[0].intValue());
+        b2 = preset("USD " + PRESETS[1].intValue());
+        b3 = preset("USD " + PRESETS[2].intValue());
+        b4 = preset("USD " + PRESETS[3].intValue());
         b1.addActionListener(this);
         b2.addActionListener(this);
         b3.addActionListener(this);
         b4.addActionListener(this);
-        b5.addActionListener(this);
-        b6.addActionListener(this);
-        b7.addActionListener(this);
+        grid.add(b1);
+        grid.add(b2);
+        grid.add(b3);
+        grid.add(b4);
 
-        setSize(960, 1080);
-        setLocation(500, 0);
-        setUndecorated(true);
+        b5 = Ui.backButton(this, pin);
+        b6 = Ui.cancelButton(this);
+        b7 = Ui.ghostButton("OTHER AMOUNT");
+        b7.addActionListener(e -> {
+            setVisible(false);
+            dispose();
+            new Withdrawl(pin).setVisible(true);
+        });
+
+        Ui.Form form = new Ui.Form("SELECT A FAST CASH AMOUNT")
+            .subtitle("One tap, no typing. Limits and machine cash still apply.")
+            .row("", grid)
+            .note("Available: " + Money.usd(Bank.get().balance(session))
+                + "   |   Withdrawn today: " + Money.usd(Bank.get().spentToday(session)))
+            .buttons(b7, b5, b6);
+
+        Ui.shell(this, "ATM - Fast cash", form.panel(), 900, 860);
         setVisible(true);
     }
 
-    // FIX 2: Fully implemented the action listener logic to query the DB and track transactions
+    private JButton preset(String text) {
+        JButton b = Ui.button(text);
+        b.setFont(new java.awt.Font(java.awt.Font.SANS_SERIF, java.awt.Font.BOLD, 20));
+        b.setBackground(java.awt.Color.WHITE);
+        b.setForeground(Ui.INK);
+        b.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+            javax.swing.BorderFactory.createLineBorder(Ui.INK),
+            javax.swing.BorderFactory.createEmptyBorder(18, 10, 18, 10)));
+        return b;
+    }
+
+    @Override
     public void actionPerformed(ActionEvent ae) {
-        if (ae.getSource() == b7) {
-            setVisible(false);
-            // Replace with your actual main menu class name if different (e.g., Transactions)
-            new Transactions(pin).setVisible(true); 
-        } else {
-            // Extracts numbers from the button string (e.g., "Rs 500" -> "500")
-            String amount = ((JButton)ae.getSource()).getText().substring(3); 
-            try {
-                Conn c = new Conn();
-                
-                // Step 1: Check balance by computing all previous deposits vs withdrawals
-                ResultSet rs = c.s.executeQuery("select * from bank where pin = '" + pin + "'");
-                int balance = 0;
-                while (rs.next()) {
-                    if (rs.getString("type").equalsIgnoreCase("Deposit")) {
-                        balance += Integer.parseInt(rs.getString("amount"));
-                    } else {
-                        balance -= Integer.parseInt(rs.getString("amount"));
-                    }
-                }
-
-                // Step 2: Handle insufficient balance verification
-               if (balance < Double.parseDouble(amount)) {
-               JOptionPane.showMessageDialog(null, "Insufficient Balance");
-                return;
-}
-
-                // Step 3: Insert the current cash withdrawal entry into the database
-                Date date = new Date();
-                String query = "insert into bank values('" + pin + "', '" + date + "', 'Withdrawal', '" + amount + "')";
-                c.s.executeUpdate(query);
-                
-                JOptionPane.showMessageDialog(null, "USD " + amount + " Debited Successfully");
-                
-                setVisible(false);
-                new Transactions(pin).setVisible(true);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        BigDecimal amount = null;
+        if (ae.getSource() == b1) {
+            amount = PRESETS[0];
+        } else if (ae.getSource() == b2) {
+            amount = PRESETS[1];
+        } else if (ae.getSource() == b3) {
+            amount = PRESETS[2];
+        } else if (ae.getSource() == b4) {
+            amount = PRESETS[3];
         }
+        if (amount == null) {
+            return;
+        }
+        final BigDecimal requested = amount;
+        Ui.run(this, () -> {
+            Bank.CustomerSession session = AppSession.require(pin);
+            MovementResult result = Bank.get().fastCash(session, requested,
+                Ids.idempotencyKey());
+            Ui.receipt(this, "Please take your cash", result.txn().reference(),
+                result.txn().amount(), result.balance(),
+                result.duplicate() ? "This withdrawal had already been dispensed."
+                    : "Fast cash dispensed from the machine float.");
+            setVisible(false);
+            dispose();
+            new Transactions(pin).setVisible(true);
+        });
     }
 
     public static void main(String[] args) {
-        new FastCash("");
+        AppSession.ensureDemo();
+        new FastCash(AppSession.pin());
     }
 }

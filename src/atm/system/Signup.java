@@ -1,214 +1,168 @@
 package atm.system;
 
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import java.sql.*;
 import com.toedter.calendar.JDateChooser;
-import java.util.*;
+import atm.core.Log;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 
+/**
+ * Signup page 1: personal details.
+ *
+ * <p>Nothing is written here. The details are staged in {@link SignupForm} under a form
+ * number and the account is opened once, on page 3, so a customer who abandons the form
+ * leaves no half-finished customer in the database.
+ */
 public class Signup extends JFrame implements ActionListener {
+
     JLabel l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15;
     JTextField t1, t2, t3, t4, t5, t6, t7;
     JRadioButton r1, r2, r3, r4, r5;
     JButton b;
     JDateChooser dateChooser;
-    Random ran = new Random();
-    long first4 = (ran.nextLong() % 9000L) + 1000L;
-    String first = "" + Math.abs(first4);
 
-    Signup() {
-        setTitle("NEW ACCOUNT APPLICATION FORM");
-        setLayout(null); // Using absolute positioning
+    private final SignupForm form;
+    private boolean handedOff;
 
-        // Logo / Icon (Ensure the path exists or handle missing resource gracefully)
-        try {
-            ImageIcon i1 = new ImageIcon(ClassLoader.getSystemResource("atm system/icons/logo.jpg"));
-            Image i2 = i1.getImage().getScaledInstance(100, 100, Image.SCALE_DEFAULT);
-            ImageIcon i3 = new ImageIcon(i2);
-            JLabel l11 = new JLabel(i3);
-            l11.setBounds(20, 0, 100, 100);
-            add(l11);
-        } catch (Exception e) {
-            System.out.println("Logo icon not found.");
-        }
-
-        // Labels
-        l1 = new JLabel("APPLICATION FORM NO. " + first);
-        l1.setFont(new Font("Raleway", Font.BOLD, 38));
-        l1.setBounds(140, 20, 600, 40);
-        add(l1);
-
-        l2 = new JLabel("Page 1: Personal Details");
-        l2.setFont(new Font("Raleway", Font.BOLD, 22));
-        l2.setBounds(290, 80, 400, 30);
-        add(l2);
-
-        l3 = new JLabel("Name:");
-        l3.setFont(new Font("Raleway", Font.BOLD, 20));
-        l3.setBounds(100, 140, 200, 30);
-        add(l3);
-
-        t1 = new JTextField();
-        t1.setFont(new Font("Raleway", Font.BOLD, 14));
-        t1.setBounds(300, 140, 400, 30);
-        add(t1);
-
-        l4 = new JLabel("Father's Name:");
-        l4.setFont(new Font("Raleway", Font.BOLD, 20));
-        l4.setBounds(100, 190, 200, 30);
-        add(l4);
-
-        t2 = new JTextField();
-        t2.setFont(new Font("Raleway", Font.BOLD, 14));
-        t2.setBounds(300, 190, 400, 30);
-        add(t2);
-
-        l5 = new JLabel("Date of Birth:");
-        l5.setFont(new Font("Raleway", Font.BOLD, 20));
-        l5.setBounds(100, 240, 200, 30);
-        add(l5);
-
-        dateChooser = new JDateChooser();
-        dateChooser.setForeground(new Color(105, 105, 105));
-        dateChooser.setBounds(300, 240, 400, 30);
-        add(dateChooser);
-
-        l6 = new JLabel("Gender:");
-        l6.setFont(new Font("Raleway", Font.BOLD, 20));
-        l6.setBounds(100, 290, 200, 30);
-        add(l6);
-
-        r1 = new JRadioButton("Male");
-        r1.setFont(new Font("Raleway", Font.BOLD, 14));
-        r1.setBackground(Color.WHITE);
-        r1.setBounds(300, 290, 120, 30);
-        add(r1);
-
-        r2 = new JRadioButton("Female");
-        r2.setFont(new Font("Raleway", Font.BOLD, 14));
-        r2.setBackground(Color.WHITE);
-        r2.setBounds(450, 290, 120, 30);
-        add(r2);
-
-        ButtonGroup gendergroup = new ButtonGroup();
-        gendergroup.add(r1);
-        gendergroup.add(r2);
-
-        l7 = new JLabel("Email Address:");
-        l7.setFont(new Font("Raleway", Font.BOLD, 20));
-        l7.setBounds(100, 340, 200, 30);
-        add(l7);
-
-        t3 = new JTextField();
-        t3.setFont(new Font("Raleway", Font.BOLD, 14));
-        t3.setBounds(300, 340, 400, 30);
-        add(t3);
-
-        l8 = new JLabel("Marital Status:");
-        l8.setFont(new Font("Raleway", Font.BOLD, 20));
-        l8.setBounds(100, 390, 200, 30);
-        add(l8);
-
-        r3 = new JRadioButton("Married");
-        r3.setFont(new Font("Raleway", Font.BOLD, 14));
-        r3.setBackground(Color.WHITE);
-        r3.setBounds(300, 390, 100, 30);
-        add(r3);
-
-        r4 = new JRadioButton("Unmarried");
-        r4.setFont(new Font("Raleway", Font.BOLD, 14));
-        r4.setBackground(Color.WHITE);
-        r4.setBounds(420, 390, 120, 30);
-        add(r4);
-
-        r5 = new JRadioButton("Other");
-        r5.setFont(new Font("Raleway", Font.BOLD, 14));
-        r5.setBackground(Color.WHITE);
-        r5.setBounds(560, 390, 100, 30);
-        add(r5);
-
-        ButtonGroup maritalgroup = new ButtonGroup();
-        maritalgroup.add(r3);
-        maritalgroup.add(r4);
-        maritalgroup.add(r5);
-
-        l9 = new JLabel("Address:");
-        l9.setFont(new Font("Raleway", Font.BOLD, 20));
-        l9.setBounds(100, 440, 200, 30);
-        add(l9);
-
-        t4 = new JTextField();
-        t4.setFont(new Font("Raleway", Font.BOLD, 14));
-        t4.setBounds(300, 440, 400, 30);
-        add(t4);
-
-        l10 = new JLabel("City:");
-        l10.setFont(new Font("Raleway", Font.BOLD, 20));
-        l10.setBounds(100, 490, 200, 30);
-        add(l10);
-
-        t5 = new JTextField();
-        t5.setFont(new Font("Raleway", Font.BOLD, 14));
-        t5.setBounds(300, 490, 400, 30);
-        add(t5);
-
-        // Next Button
-        b = new JButton("Next");
-        b.setBackground(Color.BLACK);
-        b.setForeground(Color.WHITE);
-        b.setFont(new Font("Raleway", Font.BOLD, 14));
-        b.setBounds(600, 550, 100, 30);
-        b.addActionListener(this);
-        add(b);
-
-        getContentPane().setBackground(Color.WHITE);
-        setSize(850, 680);
-        setLocation(500, 120);
-        setVisible(true);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    public Signup() {
+        this(new SignupForm(null));
     }
 
-    public void actionPerformed(ActionEvent ae) {
-        String formno = first;
-        String name = t1.getText();
-        String fname = t2.getText();
-        String dob = ((JTextField) dateChooser.getDateEditor().getUiComponent()).getText();
-        String gender = null;
-        if (r1.isSelected()) {
-            gender = "Male";
-        } else if (r2.isSelected()) {
-            gender = "Female";
+    /**
+     * Reopens page 1 on an application that is already in progress, so BACK from page 2 shows
+     * what the customer already typed instead of starting a blank form.
+     */
+    public Signup(SignupForm staged) {
+        this.form = staged;
+
+        setTitle("New account application - page 1 of 3");
+        setSize(880, 700);
+        setLocationRelativeTo(null);
+        getContentPane().setBackground(java.awt.Color.WHITE);
+
+        t1 = Ui.textField(26);
+        t2 = Ui.textField(26);
+        t3 = Ui.textField(26);
+        t4 = Ui.textField(26);
+        t5 = Ui.textField(26);
+
+        dateChooser = new JDateChooser();
+        dateChooser.setDateFormatString("dd/MM/yyyy");
+        dateChooser.setPreferredSize(new java.awt.Dimension(240, 34));
+
+        r1 = new JRadioButton("Male", true);
+        r2 = new JRadioButton("Female");
+        ButtonGroup genderGroup = new ButtonGroup();
+        genderGroup.add(r1);
+        genderGroup.add(r2);
+
+        r3 = new JRadioButton("Married");
+        r4 = new JRadioButton("Unmarried", true);
+        r5 = new JRadioButton("Other");
+        ButtonGroup maritalGroup = new ButtonGroup();
+        maritalGroup.add(r3);
+        maritalGroup.add(r4);
+        maritalGroup.add(r5);
+
+        restore(staged);
+
+        JPanel genders = new JPanel(new GridLayout(1, 2, 0, 0));
+        genders.setOpaque(false);
+        r1.setBackground(java.awt.Color.WHITE);
+        r2.setBackground(java.awt.Color.WHITE);
+        genders.add(r1);
+        genders.add(r2);
+
+        JPanel marital = new JPanel(new GridLayout(1, 3, 0, 0));
+        marital.setOpaque(false);
+        for (JRadioButton r : new JRadioButton[] {r3, r4, r5}) {
+            r.setBackground(java.awt.Color.WHITE);
+            marital.add(r);
         }
 
-        String email = t3.getText();
-        String marital = null;
-        if (r3.isSelected()) {
-            marital = "Married";
-        } else if (r4.isSelected()) {
-            marital = "Unmarried";
-        } else if (r5.isSelected()) {
-            marital = "Other";
-        }
+        b = Ui.button("NEXT");
+        b.addActionListener(this);
+        JButton cancel = Ui.cancelButton(this, () -> SignupForm.discard(form.formno));
+        Ui.onAbandonedClose(this, () -> handedOff, () -> SignupForm.discard(form.formno));
 
-        String address = t4.getText();
-        String city = t5.getText();
+        Ui.Form formPanel = new Ui.Form("APPLICATION " + this.form.formno)
+            .subtitle("Page 1 of 3: personal details. Fields marked with * are required.")
+            .row("Full name *", t1)
+            .row("Father's / guardian's name", t2)
+            .row("Date of birth", dateChooser)
+            .row("Gender", genders)
+            .row("Email address", t3)
+            .row("Marital status", marital)
+            .row("Address", t4)
+            .row("City", t5)
+            .buttons(b, cancel);
 
-        try {
-            if (name.equals("")) {
-                JOptionPane.showMessageDialog(null, "Name is Required");
-            } else {
-                // Database connectivity code snippet goes here
-                // Conn c1 = new Conn();
-                // String q1 = "insert into signup values('"+formno+"','"+name+"','"+fname+"','"+dob+"','"+gender+"','"+email+"','"+marital+"','"+address+"','"+city+"')";
-                // c1.s.executeUpdate(q1);
-                
-                setVisible(false);
-                // new Signup2(formno).setVisible(true); // Proceed to Page 2
+        setLayout(new BorderLayout());
+        getContentPane().add(formPanel.panel(), BorderLayout.CENTER);
+        getRootPane().setDefaultButton(b);
+        setVisible(true);
+    }
+
+    /** Puts back what a previous visit to this page had already captured. */
+    private void restore(SignupForm staged) {
+        t1.setText(staged.name);
+        t2.setText(staged.fname);
+        t3.setText(staged.email);
+        t4.setText(staged.address);
+        t5.setText(staged.city);
+
+        if (!staged.dob.isEmpty()) {
+            try {
+                dateChooser.setDate(new java.text.SimpleDateFormat("dd/MM/yyyy")
+                    .parse(staged.dob));
+            } catch (java.text.ParseException e) {
+                Log.warn("Ignoring unreadable staged date of birth: " + staged.dob);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+
+        r1.setSelected("Male".equals(staged.gender));
+        r2.setSelected(!"Male".equals(staged.gender));
+        r3.setSelected("Married".equals(staged.marital));
+        r4.setSelected(!"Married".equals(staged.marital) && !"Other".equals(staged.marital));
+        r5.setSelected("Other".equals(staged.marital));
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent ae) {
+        if (ae.getSource() != b) {
+            return;
+        }
+        Ui.run(this, () -> {
+            form.name = t1.getText().trim();
+            if (form.name.isEmpty()) {
+                throw new atm.core.AtmException(atm.core.AtmException.Reason.VALIDATION,
+                    "Name is required");
+            }
+            form.fname = t2.getText().trim();
+            if (dateChooser.getDate() != null) {
+                form.dob = new java.text.SimpleDateFormat("dd/MM/yyyy")
+                    .format(dateChooser.getDate());
+            }
+            form.gender = r1.isSelected() ? "Male" : "Female";
+            form.email = t3.getText().trim();
+            form.marital = r3.isSelected() ? "Married" : r4.isSelected() ? "Unmarried" : "Other";
+            form.address = t4.getText().trim();
+            form.city = t5.getText().trim();
+
+            handedOff = true;
+            setVisible(false);
+            dispose();
+            new Signup2(form.formno).setVisible(true);
+        });
     }
 
     public static void main(String[] args) {

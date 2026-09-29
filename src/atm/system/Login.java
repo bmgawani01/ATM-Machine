@@ -1,122 +1,160 @@
 package atm.system;
 
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import java.sql.*;
+import atm.core.AtmException;
+import atm.system.admin.AdminLogin;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
 
-public class Login extends JFrame implements ActionListener{
-    JLabel l1,l2,l3;
+/**
+ * Sign-in. The card number and PIN are checked by {@code atm.core.AuthService}, which
+ * applies the three-attempt lock, so this screen only has to report what went wrong.
+ */
+public class Login extends JFrame implements ActionListener {
+
+    JLabel l1, l2, l3;
     JTextField tf1;
     JPasswordField pf2;
-    JButton b1,b2,b3;
-  
-    Login(){
-        setTitle("AUTOMATED TELLER MACHINE");
-        
-        ImageIcon icon = new ImageIcon(getClass().getResource("/icons/logo.jpg")); 
+    JButton b1, b2, b3, b4;
 
-;
-        Image i2 = icon.getImage().getScaledInstance(100, 100, Image.SCALE_DEFAULT);
-        ImageIcon i3 = new ImageIcon(i2);
-        JLabel l11 = new JLabel(i3);
-        l11.setBounds(70, 10, 100, 100);
-        add(l11);
-        
-        l1 = new JLabel("WELCOME TO ATM");
-        l1.setFont(new Font("Osward", Font.BOLD, 38));
-        l1.setBounds(200,40,450,40);
-        add(l1);
-        
-        l2 = new JLabel("Card No:");
-        l2.setFont(new Font("Raleway", Font.BOLD, 28));
-        l2.setBounds(125,150,375,30);
-        add(l2);
-        
-        tf1 = new JTextField(15);
-        tf1.setBounds(300,150,230,30);
-        tf1.setFont(new Font("Arial", Font.BOLD, 14));
-        add(tf1);
-        
-        l3 = new JLabel("PIN:");
-        l3.setFont(new Font("Raleway", Font.BOLD, 28));
-        l3.setBounds(125,220,375,30);
-        add(l3);
-        
-        pf2 = new JPasswordField(15);
-        pf2.setFont(new Font("Arial", Font.BOLD, 14));
-        pf2.setBounds(300,220,230,30);
-        add(pf2);
-                
-        b1 = new JButton("SIGN IN");
-        b1.setBackground(Color.BLACK);
-        b1.setForeground(Color.WHITE);
-        
-        b2 = new JButton("CLEAR");
-        b2.setBackground(Color.BLACK);
-        b2.setForeground(Color.WHITE);
-        
-        b3 = new JButton("SIGN UP");
-        b3.setBackground(Color.BLACK);
-        b3.setForeground(Color.WHITE);
-        
-        setLayout(null);
-        
-        b1.setFont(new Font("Arial", Font.BOLD, 14));
-        b1.setBounds(300,300,100,30);
-        add(b1);
-        
-        b2.setFont(new Font("Arial", Font.BOLD, 14));
-        b2.setBounds(430,300,100,30);
-        add(b2);
-        
-        b3.setFont(new Font("Arial", Font.BOLD, 14));
-        b3.setBounds(300,350,230,30);
-        add(b3);
-        
+    public Login() {
+        setTitle("AUTOMATED TELLER MACHINE");
+        setSize(760, 560);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        getContentPane().setBackground(Color.WHITE);
+
+        JPanel root = new JPanel(new BorderLayout());
+        root.setBackground(Color.WHITE);
+
+        JPanel card = Ui.card();
+        card.setLayout(new GridBagLayout());
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(6, 8, 6, 8);
+        g.gridx = 0;
+        g.gridy = 0;
+        g.gridwidth = 2;
+
+        JLabel logo = new JLabel(Ui.icon("/icons/logo.jpg", 84));
+        g.anchor = GridBagConstraints.CENTER;
+        card.add(logo, g);
+
+        g.gridy++;
+        g.insets = new Insets(14, 8, 2, 8);
+        l1 = Ui.title("WELCOME TO ATM");
+        g.anchor = GridBagConstraints.CENTER;
+        card.add(l1, g);
+
+        g.gridy++;
+        g.insets = new Insets(16, 8, 2, 8);
+        JLabel note = Ui.hint("Three wrong PINs will lock the card for a few minutes.");
+        card.add(note, g);
+
+        g.gridy++;
+        g.insets = new Insets(18, 8, 4, 8);
+        l2 = Ui.label("Card No:");
+        card.add(l2, g);
+
+        g.gridy++;
+        g.insets = new Insets(0, 8, 4, 8);
+        tf1 = Ui.textField(18);
+        tf1.setPreferredSize(new Dimension(240, 38));
+        card.add(tf1, g);
+
+        g.gridy++;
+        g.insets = new Insets(12, 8, 4, 8);
+        l3 = Ui.label("PIN:");
+        card.add(l3, g);
+
+        g.gridy++;
+        g.insets = new Insets(0, 8, 18, 8);
+        pf2 = Ui.pinField(18);
+        pf2.setPreferredSize(new Dimension(240, 38));
+        card.add(pf2, g);
+
+        g.gridy++;
+        g.gridwidth = 2;
+        g.insets = new Insets(0, 8, 10, 8);
+        JPanel buttons = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 10, 0));
+        buttons.setOpaque(false);
+        b1 = Ui.button("SIGN IN");
+        b2 = Ui.ghostButton("CLEAR");
+        b3 = Ui.ghostButton("SIGN UP");
+        buttons.add(b1);
+        buttons.add(b2);
+        buttons.add(b3);
+        card.add(buttons, g);
+
+        g.gridy++;
+        g.insets = new Insets(0, 8, 4, 8);
+        b4 = Ui.ghostButton("STAFF / BACK OFFICE");
+        b4.setPreferredSize(new Dimension(240, 32));
+        card.add(b4, g);
+
+        g.gridy++;
+        g.insets = new Insets(12, 8, 0, 8);
+        card.add(Ui.hint("Demo card 1234567890  PIN 1234   |   staff admin / 1234"), g);
+
+        root.add(card, BorderLayout.CENTER);
+        setContentPane(root);
+
         b1.addActionListener(this);
         b2.addActionListener(this);
         b3.addActionListener(this);
-        
-        getContentPane().setBackground(Color.WHITE);
-        
-        setSize(800,480);
-        setLocation(550,200);
-        setVisible(true);
-        
-    }
-    public void actionPerformed(ActionEvent ae){
-        try{        
-            if(ae.getSource()==b1){
-                Conn c1 = new Conn();
-                String cardno  = tf1.getText();
-                String pin  = pf2.getText();
-                String q  = "select * from login where cardno = '"+cardno+"' and pin = '"+pin+"'";
+        b4.addActionListener(this);
 
-                ResultSet rs = c1.s.executeQuery(q);
-                if(rs.next()){
-                    setVisible(false);
-                    new Transactions(pin).setVisible(true);
-                }else{
-                    JOptionPane.showMessageDialog(null, "Incorrect Card Number or PIN");
-                }
-            }else if(ae.getSource()==b2){
-                tf1.setText("");
-                pf2.setText("");
-            }else if(ae.getSource()==b3){
-                setVisible(false);
-                new Signup().setVisible(true);
-            }
-        }catch(Exception e){
-            e.printStackTrace();
+        getRootPane().setDefaultButton(b1);
+        setVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent ae) {
+        if (ae.getSource() == b1) {
+            signIn();
+        } else if (ae.getSource() == b2) {
+            tf1.setText("");
+            pf2.setText("");
+            tf1.requestFocusInWindow();
+        } else if (ae.getSource() == b3) {
+            setVisible(false);
+            dispose();
+            new Signup().setVisible(true);
+        } else if (ae.getSource() == b4) {
+            setVisible(false);
+            dispose();
+            new AdminLogin().setVisible(true);
         }
     }
-    public static void main(String[] args){
-        new Login().setVisible(true);
+
+    private void signIn() {
+        Ui.run(this, () -> {
+            String cardNo = tf1.getText().trim();
+            String pin = new String(pf2.getPassword()).trim();
+            if (cardNo.isEmpty() || pin.isEmpty()) {
+                throw new AtmException(AtmException.Reason.VALIDATION,
+                    "Enter your card number and PIN");
+            }
+            AppSession.open(cardNo, pin, "ATM");
+            setVisible(false);
+            dispose();
+            new Transactions(pin).setVisible(true);
+        });
+        pf2.setText("");
     }
 
-    
+    public static void main(String[] args) {
+        new Login();
+    }
 }
-
-
-

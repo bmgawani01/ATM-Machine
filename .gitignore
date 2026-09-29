@@ -1,0 +1,17 @@
+# Build outputs
+target/
+build/
+dist/
+dist-app/
+nbproject/private/
+bin/
+*.class
+
+# Local database credentials - never commit these
+atm-db.properties
+
+# IDE / OS noise
+.idea/
+*.iml
+.vscode/
+.DS_Store
